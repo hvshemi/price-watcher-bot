@@ -1,10 +1,10 @@
 import os
 import logging
+import asyncio
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from apscheduler.schedulers.background import BackgroundScheduler
-import asyncio
 
 # === تنظیمات اولیه ===
 TOKEN = os.getenv("TOKEN")
@@ -34,7 +34,6 @@ def fetch_prices():
     except Exception as e:
         logging.error(f"خطا در دریافت قیمت‌ها: {e}")
         return None
-
 
 # تحلیل تغییرات قیمت
 def compare_prices(new, old):
@@ -97,7 +96,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('به ربات ارز و زر خوش آمدید 👋', reply_markup=reply_markup)
 
-  
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -109,7 +107,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'now':
         new_prices = fetch_prices()
 
-        # بررسی خطا در دریافت قیمت‌ها
         if not new_prices:
             await query.message.reply_text("❗️دریافت قیمت‌ها با خطا مواجه شد. لطفاً دوباره تلاش کنید.")
             return
@@ -122,7 +119,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = build_message(new_prices, changes)
         await query.message.reply_text(message)
 
-
 # راه‌اندازی بات
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -134,10 +130,8 @@ async def main():
     scheduler.start()
 
     print("Bot is running...")
-    await app.run_polling()  # این خط کافی است، نیازی به `asyncio.run()` نیست
-
+    await app.run_polling()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    # فقط اجرا کردن main بدون استفاده از asyncio.run
-    await app.run_polling()
+    asyncio.run(main())  # ✅ این خط مشکل رو حل می‌کنه

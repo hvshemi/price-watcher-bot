@@ -23,7 +23,10 @@ scheduler = BackgroundScheduler()
 def fetch_prices():
     try:
         url = os.getenv("API_URL")
-        headers = {'Accept': 'application/json'}
+        headers = {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         response = requests.get(url, headers=headers, timeout=10)
         data = response.json()
         return {

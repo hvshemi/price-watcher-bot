@@ -23,10 +23,7 @@ scheduler = BackgroundScheduler()
 def fetch_prices():
     try:
         url = os.getenv("API_URL")
-        headers = {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+        headers = {'Accept': 'application/json'}
         response = requests.get(url, headers=headers, timeout=10)
         data = response.json()
         return {
@@ -137,12 +134,10 @@ async def main():
     scheduler.start()
 
     print("Bot is running...")
-    await app.run_polling()
+    await app.run_polling()  # این خط کافی است، نیازی به `asyncio.run()` نیست
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    try:
-        asyncio.run(main())
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+    # فقط اجرا کردن main بدون استفاده از asyncio.run
+    asyncio.run(main())

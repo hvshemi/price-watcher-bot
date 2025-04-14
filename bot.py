@@ -140,4 +140,5 @@ async def main():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     # فقط اجرا کردن main بدون استفاده از asyncio.run
-    asyncio.run(main())
+ await app.run_polling()
+

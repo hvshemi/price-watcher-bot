@@ -21,15 +21,20 @@ scheduler = BackgroundScheduler()
 
 # دریافت قیمت‌ها از brsapi
 def fetch_prices():
-    url = os.getenv("API_URL")
-    headers = {'Accept': 'application/json'}
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    return {
-        'dollar': int(data['usd']['price']),
-        'gold': int(data['gold18']['price']),
-        'coin': int(data['coin_imami']['price'])
-    }
+    try:
+        url = os.getenv("API_URL")
+        headers = {'Accept': 'application/json'}
+        response = requests.get(url, headers=headers, timeout=10)
+        data = response.json()
+        return {
+            'dollar': int(data['usd']['price']),
+            'gold': int(data['gold18']['price']),
+            'coin': int(data['coin_imami']['price'])
+        }
+    except Exception as e:
+        logging.error(f"خطا در دریافت قیمت‌ها: {e}")
+        return None
+
 
 # تحلیل تغییرات قیمت
 def compare_prices(new, old):
@@ -84,6 +89,7 @@ async def check_and_notify(app):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
+            InlineKeyboardButton("💲 قیمت الان", callback_data='now'),
             InlineKeyboardButton("📘 راهنما", callback_data='help'),
             InlineKeyboardButton("📢 پشتیبانی و تبلیغات", callback_data='support')
         ]
@@ -91,6 +97,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('به ربات ارز و زر خوش آمدید 👋', reply_markup=reply_markup)
 
+  
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -99,6 +106,22 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("این ربات هر ۵ دقیقه قیمت دلار، طلا و سکه را بررسی می‌کند و در صورت تغییر، به شما اطلاع می‌دهد.")
     elif query.data == 'support':
         await query.edit_message_text("برای پشتیبانی یا تبلیغات، لطفاً با @YourUsername تماس بگیرید.")
+    elif query.data == 'now':
+        new_prices = fetch_prices()
+
+        # بررسی خطا در دریافت قیمت‌ها
+        if not new_prices:
+            await query.message.reply_text("❗️دریافت قیمت‌ها با خطا مواجه شد. لطفاً دوباره تلاش کنید.")
+            return
+
+        if last_prices['dollar'] is None:
+            changes = {'dollar': 'نامشخص', 'gold': 'نامشخص', 'coin': 'نامشخص'}
+        else:
+            changes = compare_prices(new_prices, last_prices)
+
+        message = build_message(new_prices, changes)
+        await query.message.reply_text(message)
+
 
 # راه‌اندازی بات
 async def main():
@@ -107,7 +130,7 @@ async def main():
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(button))
 
-    scheduler.add_job(lambda: asyncio.run(check_and_notify(app)), 'interval', minutes=5)
+    scheduler.add_job(lambda: asyncio.create_task(check_and_notify(app)), 'interval', minutes=5)
     scheduler.start()
 
     print("Bot is running...")
@@ -115,4 +138,8 @@ async def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except RuntimeError:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())

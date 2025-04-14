@@ -1,3 +1,4 @@
+import os
 import logging
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -6,8 +7,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import asyncio
 
 # === تنظیمات اولیه ===
-TOKEN = 'YOUR_BOT_TOKEN_HERE'  # ← توکن بات تلگرام خودت رو اینجا بذار
-CHAT_ID = 'YOUR_CHAT_ID_HERE'  # ← چت آیدی یا گروهی که می‌خوای پیام‌ها بره اونجا
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # وضعیت قیمت قبلی
 last_prices = {
@@ -20,7 +21,7 @@ scheduler = BackgroundScheduler()
 
 # دریافت قیمت‌ها از brsapi
 def fetch_prices():
-    url = 'https://api.brsapi.com/api/v1/market/iran'
+    url = os.getenv("API_URL")
     headers = {'Accept': 'application/json'}
     response = requests.get(url, headers=headers)
     data = response.json()

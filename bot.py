@@ -134,4 +134,12 @@ async def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())  # ✅ این خط مشکل رو حل می‌کنه
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "event loop is running" in str(e):
+            loop = asyncio.get_event_loop()
+            loop.create_task(main())
+            loop.run_forever()
+        else:
+            raise
